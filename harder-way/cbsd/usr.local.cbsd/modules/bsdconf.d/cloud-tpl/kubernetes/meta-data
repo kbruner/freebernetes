@@ -1,0 +1,4 @@
+---
+instance-id: %%ci_jname%%
+local-hostname: %%ci_fqdn%%
+pod-cidr: %%ci_pod_cidr%%

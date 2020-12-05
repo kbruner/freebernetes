@@ -1,0 +1,11 @@
+version: 2
+ethernets:
+  eth0:
+    match:
+      name: 'enp*'
+    addresses:
+    - %%ci_ip4_addr%%
+    gateway4: %%ci_gw4%%
+    nameservers:
+      search: [%%ci_nameserver_search%%]
+      addresses: [%%ci_nameserver_address%%]

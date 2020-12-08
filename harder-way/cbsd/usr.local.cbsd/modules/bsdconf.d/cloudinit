@@ -1,0 +1,278 @@
+#!/usr/local/bin/cbsd
+#v12.0.6
+MYARG="mode jname"
+MYOPTARG="fromfile jname cloudengine"
+MYDESC="cloud-init helper t generate CI yaml"
+ADDHELP="mode can be: show, gen\n\
+pw - plain password, or\n\
+epw - encrypted password\n\
+cloudengine - 'cloud-init' (default) or 'cloudinit-base'\n"
+
+. ${subr}
+. ${cbsdinit}
+. ${jrcconf}
+
+case "${emulator}" in
+	bhyve|xen)
+		;;
+	*)
+		log_err 1 "${N1_COLOR}Not in bhyve emulator: ${N2_COLOR}${jname}${N0_COLOR}"
+		;;
+esac
+
+[ -z "${cloudengine}" ] && cloudengine="cloud-init"
+
+_MYDIR="${distdir}/modules/bsdconf.d"
+SERVICE="cloudinit"
+
+case "${cloudengine}" in
+	cloud-init)
+		cloud_init_dir="${jailsysdir}/${jname}/cloud-init"
+		cloud_data_files="meta-data network-config user-data"
+		;;
+	cloudinit-base)
+		cloud_init_dir="${jailsysdir}/${jname}/cloud-init/openstack/latest"
+		cloud_data_files="meta_data.json network_data.json"
+		;;
+	*)
+		err 1 "${N1_COLOR}cloudinit: unknown cloud engine: ${L2_COLOR}${cloudengine}${N0_COLOR}"
+esac
+
+master_prestart_dir="${jailsysdir}/${jname}/master_prestart.d"
+
+f_getvar()
+{
+	local __var_to_get="$1" __var_to_set="$2"
+	[ "$__var_to_set" ] || local value
+	eval [ \"\${$__var_to_get+set}\" ]
+	local __retval=$?
+	eval ${__var_to_set:-value}=\"\${$__var_to_get}\"
+	[ "$__var_to_set" ] || { [ "$value" ] && echo "$value"; }
+	return $__retval
+}
+
+
+# -s source: "meta-data", "network-config" or "user-data"
+show()
+{
+	local _source=
+	local _tpldir="${_MYDIR}/cloud-tpl/${ci_template}"
+	local _keytest
+
+	[ ! -d ${_tpldir} ] && err 1 "${N1_COLOR}cloudinit: no template dir: ${N2_COLOR}${_tpldir}${N0_COLOR}"
+
+	while getopts "s:" opt; do
+		case "${opt}" in
+			s) _source="${OPTARG}" ;;
+		esac
+		shift $(($OPTIND - 1))
+	done
+
+	if [ -n "${ci_pubkey}" ]; then
+		# ci_pubkey test
+		. ${distdir}/settings-tui-virtual.subr	# for is_valid_ssh_key
+		if [ -r "${workdir}/${ci_pubkey}" ]; then
+			_keytest=$( ${GREP_CMD} -v '#' ${workdir}/${ci_pubkey} | ${GREP_CMD} . | /usr/bin/head -n1 )
+			if ! is_valid_ssh_key "${_keytest}"; then
+				echo "cloudinit: invalid ssh key in ${workdir}/${ci_pubkey} file. valid key: ssh-rsa,ssh-ed25519,ecdsa-*,ssh-dsa"
+				return 1
+			fi
+		elif [ -r "${ci_pubkey}" ]; then
+			_keytest=$( ${GREP_CMD} -v '#' ${ci_pubkey} | ${GREP_CMD} . | /usr/bin/head -n1 )
+			if ! is_valid_ssh_key "${_keytest}"; then
+				echo "cloudinit: invalid ssh key in ${ci_pubkey}. valid key: ssh-rsa,ssh-ed25519,ecdsa-*,ssh-dsa"
+				return 1
+			fi
+		else
+			if ! is_valid_ssh_key "${ci_pubkey}"; then
+				echo "cloudinit: invalid ssh key: ${ci_pubkey}. valid key: ssh-rsa,ssh-ed25519,ecdsa-*,ssh-dsa"
+				return 1
+			fi
+			_keytest="${ci_pubkey}"
+		fi
+	fi
+
+	ci_user_pw_user_lock="false"
+	[ -z "${ci_user_pw_user}" ] && ci_user_pw_user='*'
+	ci_user_pw_root_lock="false"
+	[ -z "${ci_user_pw_root}" ] && ci_user_pw_root='*'
+	[ -z "${ci_interface_mtu}" ] && ci_interface_mtu="1500"
+
+	# todo: test for empty values
+	case "${_source}" in
+		meta-data)
+			${SED_CMD} -e "s:%%ci_jname%%:${ci_jname}:g" \
+			-e "s:%%ci_fqdn%%:${ci_fqdn}:g" \
+			-e "s:%%ci_pod_cidr%%:${ci_pod_cidr}:g" \
+			${_tpldir}/${_source}
+			;;
+		meta_data.json)
+			${SED_CMD} -e "s:%%ci_jname%%:${ci_jname}:g" \
+			-e "s:%%ci_fqdn%%:${ci_fqdn}:g" \
+			-e "s:%%ci_user_pw_root%%:${ci_user_pw_root}:g" \
+			-e "s:%%ci_pod_cidr%%:${ci_pod_cidr}:g" \
+			${_tpldir}/${_source}
+			;;
+		network-config)
+			${SED_CMD} -e "s:%%ci_interface%%:${ci_interface}:g" \
+			-e "s:%%ci_interface_mtu%%:${ci_interface_mtu}:g" \
+			-e "s:%%ci_ip4_addr%%:${ci_ip4_addr}:g" \
+			-e "s:%%ci_gw4%%:${ci_gw4}:g" \
+			-e "s:%%ci_nameserver_address%%:${ci_nameserver_address}:g" \
+			-e "s:%%ci_nameserver_search%%:${ci_nameserver_search}:g" \
+			${_tpldir}/${_source}
+			;;
+		network_data.json)
+			${SED_CMD} -e "s:%%ci_interface%%:${ci_interface}:g" \
+			-e "s:%%ci_ip4_addr%%:${ci_ip4_addr}:g" \
+			-e "s:%%ci_interface_mtu%%:${ci_interface_mtu}:g" \
+			-e "s:%%ci_gw4%%:${ci_gw4}:g" \
+			-e "s:%%ci_nameserver_address%%:${ci_nameserver_address}:g" \
+			-e "s:%%ci_nameserver_search%%:${ci_nameserver_search}:g" \
+			-e "s#%%ci_nic_hwaddr0%%#${ci_nic_hwaddr0}#g" \
+			${_tpldir}/${_source}
+			;;
+		user-data)
+			# user list here
+			# This is a multi-part compound file.
+			# Without jinja/erb this is really entangled code ;-(
+
+			# change user password needed?
+			need_user_chpasswd=0
+			# change root password needed?
+			need_root_chpasswd=0
+
+			prefix=$( substr --pos=0 --len=1 --str=${ci_user_pw_user} )
+			if [ "${prefix}" = "*" ]; then
+				ci_user_pw_user_lock="true"
+			else
+				ci_user_pw_user_lock="false"
+				need_user_chpasswd=1
+			fi
+
+			${CAT_CMD} ${_tpldir}/10-user-data		# header
+			if [ "${ci_user_pw_user_lock}" = "false" ]; then
+				${SED_CMD} -e "s:%%ci_login%%:${ci_login}:g" \
+				-e "s:%%ci_shell%%:${ci_shell}:g" \
+				-e "s:%%ci_pubkey%%:${_keytest}:g" \
+				-e "s:%%ci_user_pw_user%%:${ci_user_pw_user}:g" \
+				${_tpldir}/20-user-data-user-password
+			else
+				${SED_CMD} -e "s:%%ci_login%%:${ci_login}:g" \
+				-e "s:%%ci_shell%%:${ci_shell}:g" \
+				-e "s:%%ci_pubkey%%:${_keytest}:g" \
+				${_tpldir}/20-user-data-user-lockpassword
+			fi
+
+			# root user ( combine with users ^^ ? )
+			prefix=$( substr --pos=0 --len=1 --str=${ci_user_pw_root} )
+			if [ "${prefix}" = "*" ]; then
+				ci_user_pw_root_lock="true"
+			else
+				ci_user_pw_root_lock="false"
+				need_root_chpasswd=1
+			fi
+			if [ "${ci_user_pw_root_lock}" = "false" ]; then
+				${SED_CMD} -e "s:%%ci_user_pw_root%%:${ci_user_pw_root}:g" \
+				${_tpldir}/20-user-data-root-password
+			else
+				${CAT_CMD} ${_tpldir}/20-user-data-root-lockpassword
+			fi
+
+			# chpasswd
+			if [ "${need_user_chpasswd}" = "1" -o "${need_root_chpasswd}" = "1" ]; then
+				${CAT_CMD} ${_tpldir}/30-user-data-chpasswd
+				[ "${need_user_chpasswd}" = "1" ] && ${SED_CMD} -e "s:%%ci_login%%:${ci_login}:g" -e "s:%%ci_user_pw_user%%:${ci_user_pw_user}:g" ${_tpldir}/40-user-data-chpasswd-user
+				[ "${need_root_chpasswd}" = "1" ] && ${SED_CMD} -e "s:%%ci_user_pw_root%%:${ci_user_pw_root}:g" ${_tpldir}/40-user-data-chpasswd-root
+				${CAT_CMD} ${_tpldir}/50-user-data-chpasswd
+			fi
+
+#			${SED_CMD} -e "s:%%ci_login%%:${ci_login}:g" \
+#			-e "s:%%ci_shell%%:${ci_shell}:g" \
+#			-e "s:%%ci_pubkey%%:${_keytest}:g" \
+#			-e "s:%%ci_user_pw_user%%:${ci_user_pw_user}:g" \
+#			-e "s:%%ci_user_pw_user_lock%%:${ci_user_pw_user_lock}:g" \
+#			-e "s:%%ci_user_pw_root%%:${ci_user_pw_root}:g" \
+#			-e "s:%%ci_user_pw_root_lock%%:${ci_user_pw_root_lock}:g" \
+#			${_tpldir}/${_source}
+			;;
+	esac
+}
+
+# MAIN
+if [ -n "${fromfile}" ]; then
+
+	[ ! -r "${fromfile}" ] && err 1 "${N1_COLOR}cloudinit: no such fromfile: ${N2_COLOR}${fromfile}${N0_COLOR}"
+
+	unset ci_template ci_user_pw_root ci_user_add ci_ip4_addr ci_gw4 ci_nameserver_address ci_nameserver_search
+	unset ci_jname ci_fqdn ci_interface ci_ip4_addr ci_gw4 ci_nameserver_address ci_user_pw_user ci_user_pw_root
+	unset ci_nic_hwaddr0 ci_user_pubkey ci_interface_mtu
+
+	. ${fromfile}
+
+	[ -z "${ci_template}" ] && err 1 "${N1_COLOR}No ci_template${N0_COLOR}"
+
+	for i in ${ci_user_add}; do
+		unset login epw ci_pw ci_fullname ci_secgroup ci_group ci_shell res err
+		unset ci_pubkey
+		ci_login="${i}"
+
+		f_getvar ci_user_pw_${i} ci_pw
+		f_getvar ci_user_pw_${i}_crypt ci_epw
+		f_getvar ci_user_gecos_${i} ci_fullname
+		f_getvar ci_user_home_${i} ci_home
+		f_getvar ci_user_shell_${i} ci_shell
+		f_getvar ci_user_member_groups_${i} ci_secgroup
+		f_getvar ci_user_pubkey_${i} ci_pubkey
+
+		# global pubkey
+		if [ -n "${ci_user_pubkey}" ]; then
+			ci_pubkey="${ci_user_pubkey}"
+			eval "ci_user_pubkey_${i}=\"${ci_pubkey}\""
+		fi
+
+		# add /24 prefix when not set
+		strpos --str="${ci_ip4_addr}" --search="/"
+		[ $? -eq 0 ] && ci_ip4_addr="${ci_ip4_addr}/24"
+
+		case "${mode}" in
+			show)
+				for i in ${cloud_data_files}; do
+					show -s ${i}
+					ret=$?
+					[ ${ret} -ne 0 ] && err ${ret} "cloudinit error"
+				done
+				;;
+			gen)
+				[ ! -d "${cloud_init_dir}" ] && ${MKDIR_CMD} -p ${cloud_init_dir}
+				for i in ${cloud_data_files}; do
+					show -s ${i} > ${cloud_init_dir}/${i}
+					ret=$?
+					if [ ${ret} -ne 0 ]; then
+						${CAT_CMD} ${cloud_init_dir}/${i}
+						err ${ret} "cloudinit error"
+					fi
+				done
+
+				if [ "${ci_adjust_inteface_helper}" = "1" ]; then
+					[ ! -d "${master_prestart_dir}" ] && ${MKDIR_CMD} -p ${master_prestart_dir}
+					${CP_CMD} -a ${_MYDIR}/cloud-master_prestart.d/cloud_init_set_netname.sh ${master_prestart_dir}/
+				fi
+
+				;;
+			*)
+				err 1 "${N1_COLOR}cloudinit helper: unknown mode: ${N2_COLOR}${mode}${N0_COLOR}"
+		esac
+
+	done
+	exit ${ret}
+fi
+
+case "${mode}" in
+	show)
+		echo "SHOW"
+		err=$?
+		;;
+esac
+
+err ${err} "${res}"

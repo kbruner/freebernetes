@@ -1,0 +1,32 @@
+;## NSD authoritative only DNS
+;## hardk8s.local
+;## FORWARD Zone - zone.hardk8s.local
+
+$ORIGIN hardk8s.local.  ; default zone domain
+$TTL 86400                ; default time to live
+
+@ IN SOA ns1.hardk8s.local. hostmaster.hardk8s.local. (
+           2020120701  ; serial number
+           43200       ; Refresh
+           3600        ; Retry
+           864000      ; Expire
+           86400       ; Min TTL
+           )
+
+           NS      ns1.hardk8s.local.
+
+gateway    IN     A    10.0.0.1
+
+controller-0 IN   A    10.240.0.10
+controller-1 IN   A    10.240.0.11
+controller-2 IN   A    10.240.0.12
+
+worker-0   IN     A    10.240.0.20
+worker-1   IN     A    10.240.0.21
+worker-2   IN     A    10.240.0.22
+
+kubernetes IN     A    10.240.0.2
+
+;## NSD authoritative only DNS
+;## hardk8s.local
+;## FORWARD Zone - zone.hardk8s.local

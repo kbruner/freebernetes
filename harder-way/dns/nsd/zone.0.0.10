@@ -1,0 +1,28 @@
+;## NSD authoritative only DNS
+;## 0.0.10.zone
+;## REVERSE Zone - zone.0.0.10
+
+$ORIGIN something.local.  ; default zone domain
+$TTL 86400                ; default time to live
+
+0.0.10.in-addr.arpa. IN SOA ns.something.local. hostmaster.something.local. (
+           2020120701  ; serial number
+           43200       ; Refresh
+           7200        ; Retry
+           864000      ; Expire
+           86400       ; Min TTL
+           )
+
+1.0.0.10.in-addr.arpa.   IN PTR gateway
+
+10.0.240.10.in-addr.arpa. IN PTR controller-0
+11.0.240.10.in-addr.arpa. IN PTR controller-1
+12.0.240.10.in-addr.arpa. IN PTR controller-2
+
+20.0.240.10.in-addr.arpa. IN PTR worker-0
+21.0.240.10.in-addr.arpa. IN PTR worker-1
+22.0.240.10.in-addr.arpa. IN PTR worker-2
+
+;## NSD authoritative only DNS
+;## 0.0.10.zone
+;## REVERSE Zone - zone.0.0.10

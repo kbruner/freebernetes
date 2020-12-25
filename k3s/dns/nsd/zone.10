@@ -1,0 +1,28 @@
+;## NSD authoritative only DNS
+;## 10.zone
+;## REVERSE Zone - zone.10
+
+$ORIGIN 10.in-addr.arpa.  ; default zone domain
+$TTL 3000                ; default time to live
+
+@ IN SOA ns.k3s.local. hostmaster.k3s.local. (
+           2020122401  ; serial number
+           43200       ; Refresh
+           7200        ; Retry
+           864000      ; Expire
+           3000        ; Min TTL
+           )
+
+1.0.0    IN PTR gateway.k3s.local.
+
+10.10.0  IN PTR server-0.k3s.local.
+11.10.0  IN PTR server-1.k3s.local.
+12.10.0  IN PTR server-2.k3s.local.
+
+20.10.0  IN PTR agent-0.k3s.local.
+21.10.0  IN PTR agent-1.k3s.local.
+22.10.0  IN PTR agent-2.k3s.local.
+
+;## NSD authoritative only DNS
+;## 10.zone
+;## REVERSE Zone - zone.10

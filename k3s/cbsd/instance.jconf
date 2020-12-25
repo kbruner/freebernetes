@@ -1,0 +1,137 @@
+relative_path="1";
+
+# start with system boot?
+astart="1";
+
+# first NIC hardware address
+nic_hwaddr="";
+
+# create from ZFS snapshot?
+zfs_snapsrc="";
+# run immediately upon creation
+runasap="0";
+# bind to interface
+interface="auto";
+rctl_nice="1"
+
+# Bhyve minimal configuration:
+# first disk size
+imgsize="10g";
+# number of vcpu
+vm_cpus="2";
+# ram amount
+vm_ram="2g";
+# profile os type
+vm_os_type="linux";
+# vm defaults/setting profile
+vm_os_profile="cloud-ubuntuserver-amd64-20.04";
+# end of Bhyve minimal configuration
+
+emulator="bhyve";
+# disk type - md or zvol
+imgtype="zvol";
+# efi boot?
+vm_efi="uefi";
+# source site's for iso
+iso_site="";
+# iso image type?
+iso_img_type="cloud";
+# vm hostbridge
+vm_hostbridge="hostbridge";
+# additional bhyve flags
+bhyve_flags="";
+# first disk type
+virtio_type="";
+# swap size for vm-from-jail
+swapsize="";
+# guest fs for vm-from-jail
+vm_guestfs="ufs";
+# VNC port
+vm_vnc_port="0";
+# bhyve flags
+bhyve_generate_acpi="1";
+# bhyve flags
+bhyve_wire_memory="0";
+# bhyve flags
+bhyve_rts_keeps_utc="0";
+# bhyve flags
+bhyve_force_msi_irq="0";
+# bhyve flags
+bhyve_x2apic_mode="0";
+# bhyve flags
+bhyve_mptable_gen="1";
+# bhyve flags
+bhyve_ignore_msr_acc="0";
+# wait for VNC connect when boot from CD 
+cd_vnc_wait="1";
+# VNC resolution
+bhyve_vnc_resolution="1024x768";
+# VNC bind addr
+bhyve_vnc_tcp_bind="127.0.0.1";
+# vgaconf settings
+bhyve_vnc_vgaconf="io";
+# first NIC driver
+nic_driver="";
+# password for VNC
+vnc_password='cbsd';
+# automatically eject CD when boot from CD and hard-disk is not empty
+media_auto_eject="1";
+# cpu topology name
+vm_cpu_topology="default";
+# run via debugger
+debug_engine="none";
+# emulate xhci
+xhci="1";
+# use alternative CD boot firmware
+cd_boot_firmware="refind";
+# use alternative HHD boot firmware
+hdd_boot_firmware="refind";
+# jailed bhyve ?
+jailed="0";
+# chrooted bhyve ?
+chrooted="0";
+# custom behavior settings by exit codes
+on_poweroff="restart";
+# custom behavior settings by exit codes
+on_reboot="restart";
+# custom behavior settings by exit codes
+on_crash="restart";
+# is cloud image?
+is_cloud='1';
+# default disk sectorsize
+sectorsize='512/4096'
+# sound hardware
+soundhw="";
+soundhw_play="";
+soundhw_rec="";
+mnt_start="0";
+mnt_stop="0";
+# compatible for double ACPI poweroff?
+double_acpi="1";
+virtio_rnd="1";
+uuid="0";
+
+# alternative bhyve stop wrapper
+bhyverun_wrapper="/usr/local/cbsd/share/bhyverun.sh";
+# alternative bhyve start wrapper
+bhyvestop_wrapper="0";
+# alternative bhyve cmd
+bhyve_cmd="/usr/sbin/bhyve";
+
+# cloud-init settings
+ci_template='kubernetes';
+ci_interface='eth0';
+ci_interface_mtu='1500';
+ci_gw4='10.0.10.1';
+ci_nameserver_address='10.0.0.1';
+ci_nameserver_search='k3s.local';
+ci_adjust_inteface_helper='1';
+ci_user_add='ubuntu';
+#ci_user_pw_user='This is a plain-text password';
+ci_user_pw_user='';
+ci_user_pw_root='*';
+ci_user_gecos_ubuntu='ubuntu user';
+ci_user_home_ubuntu='/home/ubuntu';
+ci_user_shell_ubuntu='/bin/bash';
+ci_user_member_groups_ubuntu='root';
+ci_user_pubkey_ubuntu='.ssh/authorized_keys';

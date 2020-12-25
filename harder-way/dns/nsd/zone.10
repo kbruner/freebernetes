@@ -1,0 +1,28 @@
+;## NSD authoritative only DNS
+;## 10.zone
+;## REVERSE Zone - zone.10
+
+$ORIGIN 10.in-addr.arpa.  ; default zone domain
+$TTL 3000                 ; default time to live
+
+@ IN SOA ns.hardk8s.local. hostmaster.hardk8s.local. (
+           2020122401  ; serial number
+           43200       ; Refresh
+           7200        ; Retry
+           864000      ; Expire
+           3000        ; Min TTL
+           )
+
+1.0.0    IN PTR gateway.hardk8s.local.
+
+10.0.240 IN PTR controller-0.hardk8s.local.
+11.0.240 IN PTR controller-1.hardk8s.local.
+12.0.240 IN PTR controller-2.hardk8s.local.
+
+20.0.240 IN PTR worker-0.hardk8s.local.
+21.0.240 IN PTR worker-1.hardk8s.local.
+22.0.240 IN PTR worker-2.hardk8s.local.
+
+;## NSD authoritative only DNS
+;## 10.zone
+;## REVERSE Zone - zone.10

@@ -1,0 +1,32 @@
+;## NSD authoritative only DNS
+;## k3s.local
+;## FORWARD Zone - zone.k3s.local
+
+$ORIGIN k3s.local.        ; default zone domain
+$TTL 86400                ; default time to live
+
+@ IN SOA ns1.k3s.local. hostmaster.k3s.local. (
+           2020122401  ; serial number
+           43200       ; Refresh
+           3600        ; Retry
+           864000      ; Expire
+           86400       ; Min TTL
+           )
+
+           NS      ns1.k3s.local.
+
+gateway    IN   A    10.0.0.1
+kubernetes IN   A    10.0.0.2
+
+server-0 IN     A    10.0.10.10
+server-1 IN     A    10.0.10.11
+server-2 IN     A    10.0.10.12
+
+agent-0  IN     A    10.0.10.20
+agent-1  IN     A    10.0.10.21
+agent-2  IN     A    10.0.10.22
+
+
+;## NSD authoritative only DNS
+;## k3s.local
+;## FORWARD Zone - zone.k3s.local

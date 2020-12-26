@@ -119,7 +119,7 @@ bhyvestop_wrapper="0";
 bhyve_cmd="/usr/sbin/bhyve";
 
 # cloud-init settings
-ci_template='kubernetes';
+ci_template='centos7';
 ci_interface='eth0';
 ci_interface_mtu='1500';
 ci_gw4='10.0.10.1';

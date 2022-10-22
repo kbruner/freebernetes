@@ -6,7 +6,7 @@ $ORIGIN k3s.local.        ; default zone domain
 $TTL 86400                ; default time to live
 
 @ IN SOA ns1.k3s.local. hostmaster.k3s.local. (
-           2020122401  ; serial number
+           2022102002  ; serial number
            43200       ; Refresh
            3600        ; Retry
            864000      ; Expire
@@ -16,6 +16,7 @@ $TTL 86400                ; default time to live
            NS      ns1.k3s.local.
 
 gateway    IN   A    10.0.0.1
+
 kubernetes IN   A    10.0.0.2
 
 server-0 IN     A    10.0.10.10

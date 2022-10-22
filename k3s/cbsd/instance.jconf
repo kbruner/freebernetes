@@ -1,5 +1,7 @@
 relative_path="1";
 
+removejconf="0";
+
 # start with system boot?
 astart="1";
 
@@ -18,13 +20,13 @@ rctl_nice="1"
 # first disk size
 imgsize="10g";
 # number of vcpu
-vm_cpus="2";
+vm_cpus="1";
 # ram amount
 vm_ram="2g";
 # profile os type
 vm_os_type="linux";
 # vm defaults/setting profile
-vm_os_profile="cloud-ubuntuserver-amd64-20.04";
+vm_os_profile="cloud-ubuntuserver-k3s-amd64-22.04";
 # end of Bhyve minimal configuration
 
 emulator="bhyve";
@@ -32,8 +34,6 @@ emulator="bhyve";
 imgtype="zvol";
 # efi boot?
 vm_efi="uefi";
-# source site's for iso
-iso_site="";
 # iso image type?
 iso_img_type="cloud";
 # vm hostbridge

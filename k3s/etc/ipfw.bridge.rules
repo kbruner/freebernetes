@@ -1,0 +1,8 @@
+00205 nat 1 ip from 10.0.0.0/8 to any out via wlan0
+00210 nat 1 ip from any to any in via wlan0
+00300 prob 0.330000 fwd 10.0.10.10 ip from any to 10.0.0.2 keep-state :default
+00301 prob 0.500000 fwd 10.0.10.11 ip from any to 10.0.0.2 keep-state :default
+00302 fwd 10.0.10.12 ip from any to 10.0.0.2 keep-state :default
+00350 prob 0.333000 fwd 10.0.10.20 ip from any to 10.2.0.0/16 keep-state :default
+00351 prob 0.500000 fwd 10.0.10.21 ip from any to 10.2.0.0/16 keep-state :default
+00352 fwd 10.0.10.22 ip from any to 10.2.0.0/16 keep-state :default
